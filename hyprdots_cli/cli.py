@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 
 from .config import get_repo_root, load_manifest
 from .git_ops import GitError, current_branch, is_git_repo, list_remote_branches, update_branch
 from .hardware import check_dependencies, detect_nvidia
+from .packages import prompt_and_install_packages
 from .plugins import ensure_plugin
 from .sync import diff_summary, export_configs, install_configs
 
@@ -68,6 +70,14 @@ def _cmd_install(args: argparse.Namespace) -> int:
     if report.wallpapers_copied:
         print(f"{prefix}Duvar kağıdı kuruldu: {report.wallpapers_copied} dosya -> {report.wallpapers_dir}")
 
+    if not getattr(args, "skip_packages", False):
+        prompt_and_install_packages(
+            manifest.pacman_packages,
+            manifest.aur_packages,
+            dry_run=args.dry_run,
+            assume_yes=getattr(args, "yes", False),
+        )
+
     if not getattr(args, "skip_plugins", False):
         resolved_home = target_home or Path.home()
         for plugin in manifest.plugins:
@@ -114,7 +124,27 @@ def _cmd_update(args: argparse.Namespace) -> int:
 
     print(f"Dal güncellendi: {active}")
     if args.apply:
-        return _cmd_install(args)
+        # Re-exec install in a fresh Python process so updates to hyprdots_cli take effect immediately
+        cmd = [sys.executable, "-m", "hyprdots_cli.cli", "install"]
+        if args.home:
+            cmd.extend(["--home", args.home])
+        if args.dry_run:
+            cmd.append("--dry-run")
+        if args.skip_backup:
+            cmd.append("--skip-backup")
+        if args.skip_wallpapers:
+            cmd.append("--skip-wallpapers")
+        if args.skip_packages:
+            cmd.append("--skip-packages")
+        if args.yes:
+            cmd.append("--yes")
+        if args.skip_plugins:
+            cmd.append("--skip-plugins")
+        if args.nvidia:
+            cmd.append("--nvidia")
+        elif args.no_nvidia:
+            cmd.append("--no-nvidia")
+        return subprocess.run(cmd, cwd=str(repo_root), check=False).returncode
     return 0
 
 
@@ -176,6 +206,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_inst.add_argument("--dry-run", action="store_true", help="Değişiklik yapmadan önizleme yap.")
     p_inst.add_argument("--skip-backup", action="store_true", help="Mevcut dosyaları yedekleme.")
     p_inst.add_argument("--skip-wallpapers", action="store_true", help="Duvar kağıtlarını kurma.")
+    p_inst.add_argument("--skip-packages", action="store_true", help="Eksik paketleri kontrol etme/kurma.")
+    p_inst.add_argument("--yes", "-y", action="store_true", help="Eksik paket kurulumunu sormadan onayla.")
     p_inst.add_argument("--skip-plugins", action="store_true", help="Hyprland eklentilerini (hyprglass vb.) kurma.")
     nv_group = p_inst.add_mutually_exclusive_group()
     nv_group.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")
@@ -191,6 +223,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_upd.add_argument("--dry-run", action="store_true", help="--apply için önizleme.")
     p_upd.add_argument("--skip-backup", action="store_true", help="--apply için yedeklemeyi atla.")
     p_upd.add_argument("--skip-wallpapers", action="store_true", help="--apply için duvar kağıtlarını kurma.")
+    p_upd.add_argument("--skip-packages", action="store_true", help="--apply için eksik paketleri kurma.")
+    p_upd.add_argument("--yes", "-y", action="store_true", help="--apply için eksik paket kurulumunu onayla.")
     p_upd.add_argument("--skip-plugins", action="store_true", help="--apply için Hyprland eklentilerini kurma.")
     nv_upd = p_upd.add_mutually_exclusive_group()
     nv_upd.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")

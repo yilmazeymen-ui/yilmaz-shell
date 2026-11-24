@@ -43,6 +43,35 @@ repo = "https://github.com/hyprnux/hyprglass"
 dest = ".local/share/hyprglass"
 artifact = "hyprglass.so"
 
+[packages]
+pacman = [
+    "hyprland",
+    "quickshell",
+    "kitty",
+    "hyprpaper",
+    "hypridle",
+    "xdg-desktop-portal-hyprland",
+    "polkit-kde-agent",
+    "cliphist",
+    "wl-clipboard",
+    "hyprshot",
+    "wireplumber",
+    "pavucontrol",
+    "cava",
+    "btop",
+    "fish",
+    "fastfetch",
+    "python-pillow",
+    "python-pywal",
+    "otf-geist-mono-nerd",
+    "make",
+    "gcc",
+    "pkgconf",
+]
+aur = [
+    "wayscriber-bin",
+]
+
 # Kurulum sonunda kontrol edilecek önerilen paket/komutlar
 dependencies = [
     "Hyprland",

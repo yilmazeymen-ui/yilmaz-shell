@@ -31,6 +31,8 @@ class Manifest:
     wallpapers_source: str = ""
     wallpapers_target_subdir: str = "Wallpapers"
     plugins: list[PluginSpec] = ()  # type: ignore[assignment]
+    pacman_packages: list[str] = ()  # type: ignore[assignment]
+    aur_packages: list[str] = ()  # type: ignore[assignment]
 
 
 def get_repo_root() -> Path:
@@ -48,6 +50,7 @@ def load_manifest(repo_root: Path | None = None) -> Manifest:
     meta = data.get("meta", {})
     wallpapers = data.get("wallpapers", {})
     raw_plugins = data.get("plugins", {})
+    packages = data.get("packages", {})
     plugins = [
         PluginSpec(
             name=name,
@@ -67,6 +70,8 @@ def load_manifest(repo_root: Path | None = None) -> Manifest:
         wallpapers_source=wallpapers.get("source", ""),
         wallpapers_target_subdir=wallpapers.get("target_subdir", "Wallpapers"),
         plugins=plugins,
+        pacman_packages=list(packages.get("pacman", [])),
+        aur_packages=list(packages.get("aur", [])),
     )
 
 
