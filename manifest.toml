@@ -1,0 +1,53 @@
+# ~/.config altından paylaşılacak dizinler
+targets = [
+    "hypr",
+    "quickshell/liquid-glass",
+    "kitty",
+    "cava",
+    "btop",
+    "fish",
+    "fastfetch",
+]
+
+# Dosya adı / yol kalıbı olarak dışlanacaklar
+exclude_globs = [
+    "*.bak",
+    "*.save",
+    "*.tmp",
+    "*.swp",
+    "*-DIR",
+    ".git",
+    ".git/**",
+    ".vscode",
+    ".vscode/**",
+    "__pycache__",
+    "palettes-backup",
+    "palettes-backup/**",
+]
+
+# ~/.config göreli tam yol olarak dışlanacaklar
+exclude_paths = [
+    "hypr/scripts/audio-restore.sh",
+    "hypr/vars/bg",
+    "hypr/vars/autolock",
+    "fish/fish_variables",
+]
+
+# Kurulum sonunda kontrol edilecek önerilen paket/komutlar
+dependencies = [
+    "Hyprland",
+    "quickshell",
+    "kitty",
+    "hyprpaper",
+    "hypridle",
+    "cliphist",
+    "wl-paste",
+    "cava",
+    "btop",
+    "fish",
+    "fastfetch",
+]
+
+[meta]
+name = "hyprdots"
+description = "Portable Hyprland, Quickshell (liquid-glass), Kitty, Cava, Btop, Fish & Fastfetch dotfiles"
