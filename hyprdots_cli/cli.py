@@ -32,6 +32,8 @@ def _cmd_export(args: argparse.Namespace) -> int:
     )
     prefix = "[DRY-RUN] " if args.dry_run else ""
     print(f"{prefix}Export tamamlandı: {len(report.copied)} dosya işlendi.")
+    if report.wallpapers_copied:
+        print(f"{prefix}Duvar kağıdı: {report.wallpapers_copied} dosya ({report.wallpapers_dir})")
     for item in report.skipped:
         print(f"  Atlandı: {item}")
     if args.dry_run:
@@ -55,12 +57,15 @@ def _cmd_install(args: argparse.Namespace) -> int:
         has_nvidia=has_nvidia,
         dry_run=args.dry_run,
         skip_backup=args.skip_backup,
+        skip_wallpapers=args.skip_wallpapers,
     )
     prefix = "[DRY-RUN] " if args.dry_run else ""
     print(
         f"{prefix}Kurulum tamamlandı: {len(report.copied)} dosya "
         f"(Nvidia profili: {'açık' if has_nvidia else 'kapalı'})."
     )
+    if report.wallpapers_copied:
+        print(f"{prefix}Duvar kağıdı kuruldu: {report.wallpapers_copied} dosya -> {report.wallpapers_dir}")
     if report.backup_dir:
         print(f"Yedek dizini: {report.backup_dir} ({len(report.backed_up)} dosya)")
     elif args.dry_run and report.backed_up:
@@ -162,6 +167,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_inst.add_argument("--home", help="Hedef HOME dizini (varsayılan: $HOME)")
     p_inst.add_argument("--dry-run", action="store_true", help="Değişiklik yapmadan önizleme yap.")
     p_inst.add_argument("--skip-backup", action="store_true", help="Mevcut dosyaları yedekleme.")
+    p_inst.add_argument("--skip-wallpapers", action="store_true", help="Duvar kağıtlarını kurma.")
     nv_group = p_inst.add_mutually_exclusive_group()
     nv_group.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")
     nv_group.add_argument("--no-nvidia", action="store_true", help="Nvidia ayarlarını zorla kapat.")
@@ -175,6 +181,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_upd.add_argument("--home", help="Hedef HOME dizini (--apply ile)")
     p_upd.add_argument("--dry-run", action="store_true", help="--apply için önizleme.")
     p_upd.add_argument("--skip-backup", action="store_true", help="--apply için yedeklemeyi atla.")
+    p_upd.add_argument("--skip-wallpapers", action="store_true", help="--apply için duvar kağıtlarını kurma.")
     nv_upd = p_upd.add_mutually_exclusive_group()
     nv_upd.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")
     nv_upd.add_argument("--no-nvidia", action="store_true", help="Nvidia ayarlarını zorla kapat.")

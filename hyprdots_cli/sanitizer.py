@@ -129,6 +129,12 @@ def sanitize_text(rel_path: str, content: str, source_home: Path) -> str:
         content = _sanitize_startup_lua(content)
     elif rel_path == "hypr/confs/env.lua":
         content = _sanitize_env_lua(content)
+    elif rel_path == "hypr/vars/bg":
+        content = re.sub(
+            rf"{re.escape(home_str)}/Resimler/Arkaplan",
+            "{{WALLPAPERS_DIR}}",
+            content,
+        )
 
     content = _sanitize_user_dirs(content, home_str)
     content = content.replace(home_str, "{{HOME}}")
@@ -140,9 +146,11 @@ def render_text(
     content: str,
     target_home: Path,
     has_nvidia: bool,
+    wallpapers_dir: Path | None = None,
 ) -> str:
     """Render sanitized template text for installation on a target machine."""
     home_str = str(target_home).rstrip("/")
+    wp_dir_str = str(wallpapers_dir or (target_home / "Pictures" / "Wallpapers")).rstrip("/")
 
     if rel_path == "hypr/confs/env.lua":
         if has_nvidia:
@@ -154,5 +162,6 @@ def render_text(
                 content,
             )
 
+    content = content.replace("{{WALLPAPERS_DIR}}", wp_dir_str)
     content = content.replace("{{HOME}}", home_str)
     return content

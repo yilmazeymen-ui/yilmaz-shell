@@ -104,6 +104,20 @@ class SanitizerTests(unittest.TestCase):
         )
         self.assertIn("/home/alice/.config/fastfetch/logo.txt", rendered)
 
+    def test_vars_bg_wallpaper_dir_replacement(self) -> None:
+        raw = "/home/eymen/Resimler/Arkaplan/yeni/Desen.png\n"
+        sanitized = sanitize_text("hypr/vars/bg", raw, self.src_home)
+        self.assertEqual(sanitized, "{{WALLPAPERS_DIR}}/yeni/Desen.png\n")
+
+        rendered = render_text(
+            "hypr/vars/bg",
+            sanitized,
+            self.dst_home,
+            has_nvidia=False,
+            wallpapers_dir=Path("/home/alice/Pictures/Wallpapers"),
+        )
+        self.assertEqual(rendered, "/home/alice/Pictures/Wallpapers/yeni/Desen.png\n")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -28,10 +28,15 @@ exclude_globs = [
 # ~/.config göreli tam yol olarak dışlanacaklar
 exclude_paths = [
     "hypr/scripts/audio-restore.sh",
-    "hypr/vars/bg",
     "hypr/vars/autolock",
     "fish/fish_variables",
 ]
+
+[wallpapers]
+# Kaynak HOME altındaki duvar kağıdı klasörü
+source = "Resimler/Arkaplan"
+# Hedef XDG Pictures altındaki klasör adı
+target_subdir = "Wallpapers"
 
 # Kurulum sonunda kontrol edilecek önerilen paket/komutlar
 dependencies = [

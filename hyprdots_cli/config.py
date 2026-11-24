@@ -18,6 +18,8 @@ class Manifest:
     exclude_globs: list[str]
     exclude_paths: set[str]
     dependencies: list[str]
+    wallpapers_source: str = ""
+    wallpapers_target_subdir: str = "Wallpapers"
 
 
 def get_repo_root() -> Path:
@@ -33,6 +35,7 @@ def load_manifest(repo_root: Path | None = None) -> Manifest:
         data = tomllib.load(f)
 
     meta = data.get("meta", {})
+    wallpapers = data.get("wallpapers", {})
     return Manifest(
         name=meta.get("name", "hyprdots"),
         description=meta.get("description", ""),
@@ -40,6 +43,8 @@ def load_manifest(repo_root: Path | None = None) -> Manifest:
         exclude_globs=list(data.get("exclude_globs", [])),
         exclude_paths=set(data.get("exclude_paths", [])),
         dependencies=list(data.get("dependencies", [])),
+        wallpapers_source=wallpapers.get("source", ""),
+        wallpapers_target_subdir=wallpapers.get("target_subdir", "Wallpapers"),
     )
 
 

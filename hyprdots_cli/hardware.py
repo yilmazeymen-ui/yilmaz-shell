@@ -56,3 +56,22 @@ def check_dependencies(commands: list[str]) -> tuple[list[str], list[str]]:
         else:
             missing.append(cmd)
     return installed, missing
+
+
+def resolve_pictures_dir(target_home: Path) -> Path:
+    """Resolve XDG Pictures directory for target_home, falling back to ~/Pictures."""
+    if target_home.resolve() == Path.home().resolve() and shutil.which("xdg-user-dir"):
+        try:
+            res = subprocess.run(
+                ["xdg-user-dir", "PICTURES"],
+                capture_output=True,
+                text=True,
+                timeout=3,
+                check=False,
+            )
+            out = res.stdout.strip()
+            if res.returncode == 0 and out:
+                return Path(out)
+        except (OSError, subprocess.SubprocessError):
+            pass
+    return target_home / "Pictures"

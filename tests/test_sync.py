@@ -16,6 +16,8 @@ class SyncTests(unittest.TestCase):
             exclude_globs=["*.bak", "*.save", ".git", ".git/**"],
             exclude_paths={"hypr/scripts/audio-restore.sh", "fish/fish_variables"},
             dependencies=[],
+            wallpapers_source="Resimler/Arkaplan",
+            wallpapers_target_subdir="Wallpapers",
         )
 
     def test_export_and_install_roundtrip_with_backup(self) -> None:
@@ -50,6 +52,15 @@ class SyncTests(unittest.TestCase):
 
             # Binary file
             (src_cfg / "kitty/icon.bin").write_bytes(b"\x00\x01\x02\xff")
+
+            # Wallpaper file
+            (src_home / "Resimler/Arkaplan/yeni").mkdir(parents=True)
+            (src_home / "Resimler/Arkaplan/yeni/Desen.png").write_bytes(b"PNGDATA")
+            (src_cfg / "hypr/vars").mkdir(parents=True)
+            (src_cfg / "hypr/vars/bg").write_text(
+                f"{src_home}/Resimler/Arkaplan/yeni/Desen.png\n",
+                encoding="utf-8",
+            )
 
             # Existing file on destination to verify backup
             (dst_cfg / "kitty").mkdir(parents=True)
@@ -89,7 +100,13 @@ class SyncTests(unittest.TestCase):
             summary = diff_summary(repo_root, manifest, target_home=dst_home, has_nvidia=False)
             self.assertEqual(len(summary["modified"]), 0)
             self.assertEqual(len(summary["missing_local"]), 0)
-            self.assertEqual(len(summary["same"]), 3)
+            self.assertEqual(len(summary["same"]), 4)
+            self.assertEqual(inst.wallpapers_copied, 1)
+            self.assertTrue((dst_home / "Pictures/Wallpapers/yeni/Desen.png").exists())
+            self.assertEqual(
+                (dst_cfg / "hypr/vars/bg").read_text(encoding="utf-8").strip(),
+                f"{dst_home}/Pictures/Wallpapers/yeni/Desen.png",
+            )
 
     def test_repo_manifest_loads_targets(self) -> None:
         manifest = load_manifest()

@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .config import Manifest, is_excluded
+from .hardware import resolve_pictures_dir
 from .sanitizer import render_text, sanitize_text
 
 
@@ -19,6 +20,8 @@ class SyncReport:
     skipped: list[str] = field(default_factory=list)
     backed_up: list[str] = field(default_factory=list)
     backup_dir: Path | None = None
+    wallpapers_copied: int = 0
+    wallpapers_dir: Path | None = None
 
 
 def _is_text_file(data: bytes) -> bool:
@@ -89,6 +92,25 @@ def export_configs(
                 out_file.write_bytes(raw)
             shutil.copymode(src_file, out_file)
 
+    if manifest.wallpapers_source:
+        wp_src = home / manifest.wallpapers_source
+        wp_dest = repo_root / "wallpapers"
+        if wp_src.exists():
+            if not dry_run and wp_dest.exists():
+                shutil.rmtree(wp_dest)
+            for wp_file in sorted(wp_src.rglob("*")):
+                if not wp_file.is_file() or wp_file.is_symlink():
+                    continue
+                rel_wp = wp_file.relative_to(wp_src).as_posix()
+                if is_excluded(rel_wp, manifest):
+                    continue
+                report.wallpapers_copied += 1
+                if not dry_run:
+                    out_wp = wp_dest / rel_wp
+                    out_wp.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(wp_file, out_wp)
+            report.wallpapers_dir = wp_dest
+
     return report
 
 
@@ -99,11 +121,13 @@ def install_configs(
     has_nvidia: bool = False,
     dry_run: bool = False,
     skip_backup: bool = False,
+    skip_wallpapers: bool = False,
 ) -> SyncReport:
     """Render and install configs from repo_root/configs into target_home/.config."""
     home = target_home or Path.home()
     src_cfg = repo_root / "configs"
     dest_cfg = home / ".config"
+    wallpapers_dir = resolve_pictures_dir(home) / manifest.wallpapers_target_subdir
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     backup_root = dest_cfg / ".hyprdots-backup" / timestamp
     report = SyncReport()
@@ -132,11 +156,32 @@ def install_configs(
 
             dest_file.parent.mkdir(parents=True, exist_ok=True)
             if _is_text_file(raw):
-                rendered = render_text(rel, raw.decode("utf-8"), home, has_nvidia=has_nvidia)
+                rendered = render_text(
+                    rel,
+                    raw.decode("utf-8"),
+                    home,
+                    has_nvidia=has_nvidia,
+                    wallpapers_dir=wallpapers_dir,
+                )
                 dest_file.write_text(rendered, encoding="utf-8")
             else:
                 dest_file.write_bytes(raw)
             shutil.copymode(src_file, dest_file)
+
+    wp_repo = repo_root / "wallpapers"
+    if not skip_wallpapers and wp_repo.exists():
+        report.wallpapers_dir = wallpapers_dir
+        for wp_file in sorted(wp_repo.rglob("*")):
+            if not wp_file.is_file() or wp_file.is_symlink():
+                continue
+            rel_wp = wp_file.relative_to(wp_repo).as_posix()
+            if is_excluded(rel_wp, manifest):
+                continue
+            report.wallpapers_copied += 1
+            if not dry_run:
+                out_wp = wallpapers_dir / rel_wp
+                out_wp.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(wp_file, out_wp)
 
     return report
 
@@ -151,6 +196,7 @@ def diff_summary(
     home = target_home or Path.home()
     src_cfg = repo_root / "configs"
     dest_cfg = home / ".config"
+    wallpapers_dir = resolve_pictures_dir(home) / manifest.wallpapers_target_subdir
 
     same: list[str] = []
     modified: list[str] = []
@@ -165,9 +211,13 @@ def diff_summary(
 
             raw = src_file.read_bytes()
             if _is_text_file(raw):
-                expected = render_text(rel, raw.decode("utf-8"), home, has_nvidia=has_nvidia).encode(
-                    "utf-8"
-                )
+                expected = render_text(
+                    rel,
+                    raw.decode("utf-8"),
+                    home,
+                    has_nvidia=has_nvidia,
+                    wallpapers_dir=wallpapers_dir,
+                ).encode("utf-8")
             else:
                 expected = raw
 
