@@ -38,6 +38,11 @@ source = "Resimler/Arkaplan"
 # Hedef XDG Pictures altındaki klasör adı
 target_subdir = "Wallpapers"
 
+[plugins.hyprglass]
+repo = "https://github.com/hyprnux/hyprglass"
+dest = ".local/share/hyprglass"
+artifact = "hyprglass.so"
+
 # Kurulum sonunda kontrol edilecek önerilen paket/komutlar
 dependencies = [
     "Hyprland",

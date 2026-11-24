@@ -114,6 +114,7 @@ class SyncTests(unittest.TestCase):
         self.assertIn("quickshell/liquid-glass", manifest.targets)
         self.assertIn("kitty", manifest.targets)
         self.assertIn("hypr/scripts/audio-restore.sh", manifest.exclude_paths)
+        self.assertTrue(any(p.name == "hyprglass" for p in manifest.plugins))
 
 
 if __name__ == "__main__":

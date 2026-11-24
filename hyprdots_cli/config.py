@@ -9,6 +9,16 @@ from pathlib import Path
 
 
 @dataclass(frozen=True)
+class PluginSpec:
+    """Represents a buildable Hyprland plugin entry."""
+
+    name: str
+    repo: str
+    dest: str
+    artifact: str
+
+
+@dataclass(frozen=True)
 class Manifest:
     """Represents the parsed manifest.toml configuration."""
 
@@ -20,6 +30,7 @@ class Manifest:
     dependencies: list[str]
     wallpapers_source: str = ""
     wallpapers_target_subdir: str = "Wallpapers"
+    plugins: list[PluginSpec] = ()  # type: ignore[assignment]
 
 
 def get_repo_root() -> Path:
@@ -36,6 +47,16 @@ def load_manifest(repo_root: Path | None = None) -> Manifest:
 
     meta = data.get("meta", {})
     wallpapers = data.get("wallpapers", {})
+    raw_plugins = data.get("plugins", {})
+    plugins = [
+        PluginSpec(
+            name=name,
+            repo=spec["repo"],
+            dest=spec["dest"],
+            artifact=spec["artifact"],
+        )
+        for name, spec in raw_plugins.items()
+    ]
     return Manifest(
         name=meta.get("name", "hyprdots"),
         description=meta.get("description", ""),
@@ -45,6 +66,7 @@ def load_manifest(repo_root: Path | None = None) -> Manifest:
         dependencies=list(data.get("dependencies", [])),
         wallpapers_source=wallpapers.get("source", ""),
         wallpapers_target_subdir=wallpapers.get("target_subdir", "Wallpapers"),
+        plugins=plugins,
     )
 
 

@@ -9,6 +9,7 @@ from pathlib import Path
 from .config import get_repo_root, load_manifest
 from .git_ops import GitError, current_branch, is_git_repo, list_remote_branches, update_branch
 from .hardware import check_dependencies, detect_nvidia
+from .plugins import ensure_plugin
 from .sync import diff_summary, export_configs, install_configs
 
 
@@ -66,6 +67,13 @@ def _cmd_install(args: argparse.Namespace) -> int:
     )
     if report.wallpapers_copied:
         print(f"{prefix}Duvar kağıdı kuruldu: {report.wallpapers_copied} dosya -> {report.wallpapers_dir}")
+
+    if not getattr(args, "skip_plugins", False):
+        resolved_home = target_home or Path.home()
+        for plugin in manifest.plugins:
+            ok, msg = ensure_plugin(plugin, resolved_home, dry_run=args.dry_run)
+            stream = sys.stdout if ok else sys.stderr
+            print(msg, file=stream)
     if report.backup_dir:
         print(f"Yedek dizini: {report.backup_dir} ({len(report.backed_up)} dosya)")
     elif args.dry_run and report.backed_up:
@@ -168,6 +176,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_inst.add_argument("--dry-run", action="store_true", help="Değişiklik yapmadan önizleme yap.")
     p_inst.add_argument("--skip-backup", action="store_true", help="Mevcut dosyaları yedekleme.")
     p_inst.add_argument("--skip-wallpapers", action="store_true", help="Duvar kağıtlarını kurma.")
+    p_inst.add_argument("--skip-plugins", action="store_true", help="Hyprland eklentilerini (hyprglass vb.) kurma.")
     nv_group = p_inst.add_mutually_exclusive_group()
     nv_group.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")
     nv_group.add_argument("--no-nvidia", action="store_true", help="Nvidia ayarlarını zorla kapat.")
@@ -182,6 +191,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_upd.add_argument("--dry-run", action="store_true", help="--apply için önizleme.")
     p_upd.add_argument("--skip-backup", action="store_true", help="--apply için yedeklemeyi atla.")
     p_upd.add_argument("--skip-wallpapers", action="store_true", help="--apply için duvar kağıtlarını kurma.")
+    p_upd.add_argument("--skip-plugins", action="store_true", help="--apply için Hyprland eklentilerini kurma.")
     nv_upd = p_upd.add_mutually_exclusive_group()
     nv_upd.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")
     nv_upd.add_argument("--no-nvidia", action="store_true", help="Nvidia ayarlarını zorla kapat.")
