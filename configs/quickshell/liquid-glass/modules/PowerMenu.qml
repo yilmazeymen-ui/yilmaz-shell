@@ -37,7 +37,7 @@ Item {
             icon: "󰍃",
             destructive: true,
             needsConfirm: true,
-            command: ["hyprctl", "dispatch", "exit"]
+            command: ["hyprctl", "dispatch", "hl.dsp.exit()"]
         },
         {
             id: "reboot",
