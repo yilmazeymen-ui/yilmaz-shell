@@ -32,6 +32,22 @@ exclude_paths = [
     "fish/fish_variables",
 ]
 
+# İlk kurulumda yüklenir; sistemde zaten varsa güncellemede korunur (--force ile ezilebilir)
+preserve_if_exists = [
+    "kitty/kitty.conf",
+    "hypr/confs/keybindings.lua",
+    "hypr/confs/keyboard.lua",
+    "hypr/confs/monitor.lua",
+    "hypr/confs/vars.lua",
+    "hypr/confs/deco.lua",
+    "hypr/confs/cursor.lua",
+    "hypr/vars/bg",
+    "fish/config.fish",
+    "fastfetch/config.jsonc",
+    "btop/btop.conf",
+    "cava/config",
+]
+
 [wallpapers]
 # Kaynak HOME altındaki duvar kağıdı klasörü
 source = "Resimler/Arkaplan"

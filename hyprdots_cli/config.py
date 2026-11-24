@@ -33,6 +33,7 @@ class Manifest:
     plugins: list[PluginSpec] = ()  # type: ignore[assignment]
     pacman_packages: list[str] = ()  # type: ignore[assignment]
     aur_packages: list[str] = ()  # type: ignore[assignment]
+    preserve_if_exists: set[str] = frozenset()  # type: ignore[assignment]
 
 
 def get_repo_root() -> Path:
@@ -72,6 +73,7 @@ def load_manifest(repo_root: Path | None = None) -> Manifest:
         plugins=plugins,
         pacman_packages=list(packages.get("pacman", [])),
         aur_packages=list(packages.get("aur", [])),
+        preserve_if_exists=set(data.get("preserve_if_exists", [])),
     )
 
 

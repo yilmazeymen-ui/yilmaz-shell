@@ -18,6 +18,7 @@ class SyncReport:
 
     copied: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
+    preserved: list[str] = field(default_factory=list)
     backed_up: list[str] = field(default_factory=list)
     backup_dir: Path | None = None
     wallpapers_copied: int = 0
@@ -122,6 +123,7 @@ def install_configs(
     dry_run: bool = False,
     skip_backup: bool = False,
     skip_wallpapers: bool = False,
+    force: bool = False,
 ) -> SyncReport:
     """Render and install configs from repo_root/configs into target_home/.config."""
     home = target_home or Path.home()
@@ -140,6 +142,11 @@ def install_configs(
         for src_file, rel in _iter_target_files(src_cfg, target, manifest):
             raw = src_file.read_bytes()
             dest_file = dest_cfg / rel
+
+            if dest_file.exists() and not force and rel in manifest.preserve_if_exists:
+                report.preserved.append(rel)
+                continue
+
             report.copied.append(rel)
 
             if dry_run:

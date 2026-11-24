@@ -61,12 +61,18 @@ def _cmd_install(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         skip_backup=args.skip_backup,
         skip_wallpapers=args.skip_wallpapers,
+        force=getattr(args, "force", False),
     )
     prefix = "[DRY-RUN] " if args.dry_run else ""
     print(
         f"{prefix}Kurulum tamamlandı: {len(report.copied)} dosya "
         f"(Nvidia profili: {'açık' if has_nvidia else 'kapalı'})."
     )
+    if report.preserved:
+        print(
+            f"{prefix}Korunan kişisel config'ler: {len(report.preserved)} dosya "
+            "(üzerine yazmak için --force)"
+        )
     if report.wallpapers_copied:
         print(f"{prefix}Duvar kağıdı kuruldu: {report.wallpapers_copied} dosya -> {report.wallpapers_dir}")
 
@@ -140,6 +146,8 @@ def _cmd_update(args: argparse.Namespace) -> int:
             cmd.append("--yes")
         if args.skip_plugins:
             cmd.append("--skip-plugins")
+        if args.force:
+            cmd.append("--force")
         if args.nvidia:
             cmd.append("--nvidia")
         elif args.no_nvidia:
@@ -209,6 +217,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_inst.add_argument("--skip-packages", action="store_true", help="Eksik paketleri kontrol etme/kurma.")
     p_inst.add_argument("--yes", "-y", action="store_true", help="Eksik paket kurulumunu sormadan onayla.")
     p_inst.add_argument("--skip-plugins", action="store_true", help="Hyprland eklentilerini (hyprglass vb.) kurma.")
+    p_inst.add_argument("--force", "-f", action="store_true", help="Mevcut kişisel config'lerin de üzerine yaz.")
     nv_group = p_inst.add_mutually_exclusive_group()
     nv_group.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")
     nv_group.add_argument("--no-nvidia", action="store_true", help="Nvidia ayarlarını zorla kapat.")
@@ -226,6 +235,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_upd.add_argument("--skip-packages", action="store_true", help="--apply için eksik paketleri kurma.")
     p_upd.add_argument("--yes", "-y", action="store_true", help="--apply için eksik paket kurulumunu onayla.")
     p_upd.add_argument("--skip-plugins", action="store_true", help="--apply için Hyprland eklentilerini kurma.")
+    p_upd.add_argument("--force", "-f", action="store_true", help="--apply için kişisel config'lerin de üzerine yaz.")
     nv_upd = p_upd.add_mutually_exclusive_group()
     nv_upd.add_argument("--nvidia", action="store_true", help="Nvidia ayarlarını zorla ekle.")
     nv_upd.add_argument("--no-nvidia", action="store_true", help="Nvidia ayarlarını zorla kapat.")

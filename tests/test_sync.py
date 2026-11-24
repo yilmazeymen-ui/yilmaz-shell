@@ -115,6 +115,50 @@ class SyncTests(unittest.TestCase):
         self.assertIn("kitty", manifest.targets)
         self.assertIn("hypr/scripts/audio-restore.sh", manifest.exclude_paths)
         self.assertTrue(any(p.name == "hyprglass" for p in manifest.plugins))
+        self.assertIn("kitty/kitty.conf", manifest.preserve_if_exists)
+        self.assertIn("hypr/confs/keybindings.lua", manifest.preserve_if_exists)
+
+    def test_preserve_if_exists_skips_custom_files_unless_forced(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            repo_root = tmp_path / "repo"
+            dst_home = tmp_path / "home"
+            (repo_root / "configs/kitty").mkdir(parents=True)
+            (repo_root / "configs/quickshell/liquid-glass").mkdir(parents=True)
+            (repo_root / "configs/kitty/kitty.conf").write_text("background_opacity 0.2\n", encoding="utf-8")
+            (repo_root / "configs/quickshell/liquid-glass/Theme.qml").write_text("v2\n", encoding="utf-8")
+
+            manifest = Manifest(
+                name="hyprdots",
+                description="test",
+                targets=["kitty", "quickshell/liquid-glass"],
+                exclude_globs=[],
+                exclude_paths=set(),
+                dependencies=[],
+                preserve_if_exists={"kitty/kitty.conf"},
+            )
+
+            # First install: installs both
+            first = install_configs(repo_root, manifest, target_home=dst_home, skip_wallpapers=True)
+            self.assertIn("kitty/kitty.conf", first.copied)
+            self.assertEqual(first.preserved, [])
+
+            # User customizes kitty.conf
+            kitty_dst = dst_home / ".config/kitty/kitty.conf"
+            kitty_dst.write_text("background_opacity 0.9\n", encoding="utf-8")
+
+            # Update/reinstall without force: preserves kitty.conf, updates Theme.qml
+            second = install_configs(repo_root, manifest, target_home=dst_home, skip_wallpapers=True)
+            self.assertIn("kitty/kitty.conf", second.preserved)
+            self.assertIn("quickshell/liquid-glass/Theme.qml", second.copied)
+            self.assertEqual(kitty_dst.read_text(encoding="utf-8"), "background_opacity 0.9\n")
+
+            # Install with force=True: overwrites kitty.conf
+            third = install_configs(
+                repo_root, manifest, target_home=dst_home, skip_wallpapers=True, force=True
+            )
+            self.assertIn("kitty/kitty.conf", third.copied)
+            self.assertEqual(kitty_dst.read_text(encoding="utf-8"), "background_opacity 0.2\n")
 
 
 if __name__ == "__main__":
